@@ -1,0 +1,130 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+{% block page_title %}Cars{% endblock %}
+
+{% block content %}
+<!-- ================= ADD CAR FORM ================= -->
+<div class="card mb-3">
+  <div class="card-header bg-white">
+    <h6 class="mb-0"><i class="bi bi-plus-circle"></i> Add Car</h6>
+  </div>
+  <div class="card-body">
+    <form method="POST" enctype="multipart/form-data">
+      {% csrf_token %}
+      <div class="row g-3">
+        {{ form|crispy }}
+      </div>
+      <div class="mt-3">
+        <button type="submit" class="btn btn-primary">
+          <i class="bi bi-check-lg"></i> Save Car
+        </button>
+        <button type="reset" class="btn btn-outline-secondary">Reset</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ================= FLEET TABLE ================= -->
+<div class="card">
+  <div class="card-header bg-white d-flex justify-content-between align-items-center">
+    <h6 class="mb-0"><i class="bi bi-car-front"></i> Fleet ({{ cars|length }})</h6>
+    
+    <!-- Search & Filter Controls -->
+    <div class="d-flex gap-2">
+      <input type="text" id="carSearch" class="form-control form-control-sm" placeholder="Search plate, make, model..." style="width: 250px;">
+      <select id="carStatusFilter" class="form-select form-select-sm" style="width: 150px;">
+        <option value="">All Statuses</option>
+        <option value="Available">Available</option>
+        <option value="Taken">Taken</option>
+        <option value="Maintenance">Maintenance</option>
+      </select>
+      <a href="{% url 'car_pdf' %}" target="_blank" class="btn btn-sm btn-outline-secondary">
+        <i class="bi bi-file-earmark-pdf"></i> PDF
+      </a>
+    </div>
+  </div>
+  
+  <div class="table-responsive">
+    <table class="table table-hover align-middle mb-0">
+      <thead>
+        <tr>
+          <th>#</th><th>Photo</th><th>Plate</th><th>Make</th><th>Model</th>
+          <th>Seats</th><th>Trans.</th><th>Price/Day (UGX)</th><th>Status</th><th>Actions</th>
+        </tr>
+      </thead>
+      <!-- ID added here so JavaScript can find the rows -->
+      <tbody id="carTableBody">
+        {% for car in cars %}
+        <tr>
+          <td>{{ forloop.counter }}</td>
+          <td>
+            {% if car.image %}
+              <img src="{{ car.image.url }}" alt="" style="width:48px;height:36px;object-fit:cover;border-radius:4px;">
+            {% else %}
+              <span class="text-muted small">—</span>
+            {% endif %}
+          </td>
+          <td>{{ car.plate_no }}</td>
+          <td>{{ car.make }}</td>
+          <td>{{ car.car_Model }}</td>
+          <td>{{ car.capacity|default:"—" }}</td>
+          <td>{{ car.get_transmission_display }}</td>
+          <td>{{ car.price_per_day|floatformat:0|default:"—" }}</td>
+          <td>
+            {% if car.status == 'A' %}<span class="badge bg-success">Available</span>
+            {% elif car.status == 'T' %}<span class="badge bg-warning text-dark">Taken</span>
+            {% else %}<span class="badge bg-secondary">Maintenance</span>{% endif %}
+          </td>
+          <td class="text-nowrap">
+            <a href="{% url 'edit_car_page' car.id %}" class="btn btn-sm btn-outline-primary"><i class="bi bi-pencil"></i></a>
+            <a href="{% url 'delete_car_page' car.id %}" class="btn btn-sm btn-outline-danger"
+               onclick="return confirm('Delete this car?')"><i class="bi bi-trash"></i></a>
+          </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="10" class="text-center text-muted py-4">No cars yet — add one above.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+{% endblock %}
+
+<!-- ================= JAVASCRIPT ================= -->
+{% block extra_js %}
+<script>
+  const searchInput = document.getElementById('carSearch');
+  const statusFilter = document.getElementById('carStatusFilter');
+  const tableBody = document.getElementById('carTableBody');
+  const rows = tableBody.getElementsByTagName('tr');
+
+  function filterCars() {
+    const searchTerm = searchInput.value.toLowerCase();
+    const statusTerm = statusFilter.value.toLowerCase();
+
+    for (let i = 0; i < rows.length; i++) {
+      const row = rows[i];
+      // Skip the "No cars yet" row if it exists
+      if (row.cells.length < 5) continue; 
+      
+      const rowText = row.innerText.toLowerCase();
+      // Column index 8 is the Status column
+      const statusText = row.cells[8].innerText.toLowerCase(); 
+      
+      const matchesSearch = rowText.includes(searchTerm);
+      const matchesStatus = statusTerm === "" || statusText.includes(statusTerm);
+
+      if (matchesSearch && matchesStatus) {
+        row.style.display = "";
+      } else {
+        row.style.display = "none";
+      }
+    }
+  }
+
+  // Trigger filter when typing or changing the dropdown
+  searchInput.addEventListener('keyup', filterCars);
+  statusFilter.addEventListener('change', filterCars);
+</script>
+{% endblock %}

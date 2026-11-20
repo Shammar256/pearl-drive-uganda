@@ -1,0 +1,155 @@
+{% extends 'base.html' %}
+{% block page_title %}Dashboard{% endblock %}
+{% block content %}
+
+<!-- ================= ALERTS ================= -->
+{% if overdue_hires %}
+<div class="alert alert-danger d-flex align-items-center mb-3">
+  <i class="bi bi-clock-fill me-2"></i>
+  <div><b>{{ overdue_hires }}</b> active hire{{ overdue_hires|pluralize }} past the expected return date!
+    <a href="{% url 'add_hiring_page' %}" class="alert-link">View hires →</a>
+  </div>
+</div>
+{% endif %}
+
+{% if overdue_maintenance %}
+<div class="alert alert-danger d-flex align-items-center mb-3">
+  <i class="bi bi-exclamation-triangle-fill me-2"></i>
+  <div><b>{{ overdue_maintenance }}</b> maintenance record{{ overdue_maintenance|pluralize }} overdue.
+    <a href="{% url 'add_maintenance_page' %}" class="alert-link">View maintenance →</a>
+  </div>
+</div>
+{% endif %}
+
+<!-- ================= KPI CARDS ================= -->
+<div class="row g-3 mb-4">
+  <!-- Revenue KPIs -->
+  <div class="col-md-6 col-lg-3">
+    <div class="card p-3 bg-primary text-white shadow-sm border-0">
+      <div class="small opacity-75">Total Revenue (All Time)</div>
+      <div class="fs-3 fw-bold mt-1">UGX {{ total_revenue|floatformat:0 }}</div>
+    </div>
+  </div>
+  <div class="col-md-6 col-lg-3">
+    <div class="card p-3 bg-success text-white shadow-sm border-0">
+      <div class="small opacity-75">Revenue This Month</div>
+      <div class="fs-3 fw-bold mt-1">UGX {{ revenue_this_month|floatformat:0 }}</div>
+    </div>
+  </div>
+  
+  <!-- Fleet KPIs -->
+  <div class="col-md-6 col-lg-3">
+    <div class="card p-3 shadow-sm border-0">
+      <div class="text-muted small">Active Hires</div>
+      <div class="fs-3 fw-bold text-warning">{{ taken }}</div>
+      <div class="small text-muted">{{ available }} cars available</div>
+    </div>
+  </div>
+  <div class="col-md-6 col-lg-3">
+    <div class="card p-3 shadow-sm border-0">
+      <div class="text-muted small">Total Fleet / In Garage</div>
+      <div class="fs-3 fw-bold">{{ total_cars }} <span class="text-secondary fs-5">/ {{ in_garage }}</span></div>
+      <div class="small text-muted">{{ total_drivers }} drivers ({{ drivers_available }} avail.)</div>
+    </div>
+  </div>
+</div>
+
+<div class="row g-3 mb-4">
+  <!-- ================= CHART ================= -->
+  <div class="col-lg-8">
+    <div class="card shadow-sm border-0 h-100">
+      <div class="card-header bg-white pt-3 pb-0 border-0">
+        <h6 class="mb-0 fw-bold"><i class="bi bi-graph-up-arrow text-primary"></i> Revenue Trend (Last 6 Months)</h6>
+      </div>
+      <div class="card-body">
+        <canvas id="revenueChart" height="100"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= TOP CARS ================= -->
+  <div class="col-lg-4">
+    <div class="card shadow-sm border-0 h-100">
+      <div class="card-header bg-white pt-3 pb-0 border-0">
+        <h6 class="mb-0 fw-bold"><i class="bi bi-trophy text-warning"></i> Top Earning Cars</h6>
+      </div>
+      <div class="card-body p-0">
+        <ul class="list-group list-group-flush">
+          {% for car in top_cars %}
+          <li class="list-group-item d-flex justify-content-between align-items-center py-3">
+            <div>
+              <div class="fw-bold">{{ car.make }} {{ car.car_Model }}</div>
+              <div class="small text-muted">{{ car.plate_no }}</div>
+            </div>
+            <span class="badge bg-success rounded-pill">UGX {{ car.total_earned|floatformat:0 }}</span>
+          </li>
+          {% empty %}
+          <li class="list-group-item text-center text-muted py-4">No revenue data yet.</li>
+          {% endfor %}
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ================= QUICK ACTIONS ================= -->
+<div class="card shadow-sm border-0 p-3">
+  <h6 class="mb-3 fw-bold">Quick Actions</h6>
+  <div class="d-flex flex-wrap gap-2">
+    <a href="{% url 'add_car_page' %}" class="btn btn-primary"><i class="bi bi-plus-lg"></i> Add Car</a>
+    <a href="{% url 'add_customer_page' %}" class="btn btn-outline-primary"><i class="bi bi-person-plus"></i> Add Customer</a>
+    <a href="{% url 'add_driver_page' %}" class="btn btn-outline-primary"><i class="bi bi-person-badge"></i> Add Driver</a>
+    <a href="{% url 'add_hiring_page' %}" class="btn btn-outline-primary"><i class="bi bi-key"></i> New Hire</a>
+    <a href="{% url 'add_maintenance_page' %}" class="btn btn-outline-primary"><i class="bi bi-wrench-adjustable"></i> Log Service</a>
+  </div>
+</div>
+
+{% endblock %}
+
+<!-- ================= CHART JS ================= -->
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+  const ctx = document.getElementById('revenueChart').getContext('2d');
+  
+  // Data passed from Django
+  const labels = {{ chart_labels|safe }};
+  const data = {{ chart_data|safe }};
+
+  new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: labels,
+      datasets: [{
+        label: 'Revenue (UGX)',
+        data: data,
+        borderColor: '#1e3a8a',
+        backgroundColor: 'rgba(30, 58, 138, 0.1)',
+        borderWidth: 2,
+        pointBackgroundColor: '#f59e0b',
+        pointBorderColor: '#fff',
+        pointRadius: 4,
+        fill: true,
+        tension: 0.3
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false }
+      },
+      scales: {
+        y: {
+          beginAtZero: true,
+          ticks: {
+            callback: function(value) {
+              return 'UGX ' + value.toLocaleString();
+            }
+          }
+        }
+      }
+    }
+  });
+</script>
+{% endblock %}

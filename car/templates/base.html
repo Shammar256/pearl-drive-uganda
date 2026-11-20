@@ -1,0 +1,200 @@
+{% load static crispy_forms_tags %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}Pearl Drive Uganda{% endblock %}</title>
+
+  <!-- Bootstrap 5 + Icons (CDN — no local assets needed) -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+
+  <style>
+    :root {
+      --pdu-primary: #1e3a8a;      /* deep blue */
+      --pdu-accent:  #f59e0b;      /* amber */
+      --pdu-bg:      #f5f7fb;
+    }
+    body { background: var(--pdu-bg); }
+
+    /* Sidebar */
+    .pdu-sidebar {
+      background: var(--pdu-primary);
+      color: #fff;
+      min-height: 100vh;
+      width: 240px;
+      position: fixed; top: 0; left: 0;
+      padding: 1rem .75rem;
+      z-index: 1030;
+      transition: transform .2s ease;
+    }
+    .pdu-sidebar .brand {
+      display: flex; align-items: center; gap: .5rem;
+      font-weight: 700; font-size: 1.1rem;
+      padding: .5rem .5rem 1rem;
+      border-bottom: 1px solid rgba(255,255,255,.15);
+      color: #fff; text-decoration: none;
+    }
+    .pdu-sidebar .brand i { color: var(--pdu-accent); }
+    .pdu-sidebar .nav-link {
+      color: rgba(255,255,255,.85);
+      padding: .55rem .75rem;
+      border-radius: .5rem;
+      margin-bottom: 2px;
+      display: flex; align-items: center; gap: .6rem;
+      font-size: .93rem;
+    }
+    .pdu-sidebar .nav-link:hover,
+    .pdu-sidebar .nav-link.active {
+      background: rgba(255,255,255,.12);
+      color: #fff;
+    }
+    .pdu-sidebar .nav-link i { width: 1.1rem; text-align: center; }
+
+    /* Main */
+    .pdu-main { margin-left: 240px; min-height: 100vh; }
+    .pdu-topbar {
+      background: #fff;
+      border-bottom: 1px solid #e5e7eb;
+      padding: .75rem 1.25rem;
+      display: flex; align-items: center; justify-content: space-between;
+      position: sticky; top: 0; z-index: 1020;
+    }
+    .pdu-topbar .title { font-weight: 600; color: #111827; }
+    .pdu-content { padding: 1.5rem; }
+
+    /* Mobile */
+    @media (max-width: 991.98px) {
+      .pdu-sidebar { transform: translateX(-100%); }
+      .pdu-sidebar.open { transform: translateX(0); }
+      .pdu-main { margin-left: 0; }
+    }
+
+    /* Small polish */
+    .card { border: none; box-shadow: 0 2px 8px rgba(0,0,0,.05); }
+    .table thead th { background: #f3f4f6; font-size: .8rem; text-transform: uppercase; color: #6b7280; }
+  </style>
+</head>
+<body>
+
+<!-- ============ SIDEBAR ============ -->
+<aside class="pdu-sidebar" id="pduSidebar">
+  <a class="brand" href="{% url 'index_page' %}">
+    <i class="bi bi-car-front-fill fs-4"></i>
+    <span>Pearl Drive Uganda</span>
+  </a>
+
+  <nav class="nav flex-column mt-2">
+    <!-- NEW: Admin Control Center -->
+    <a class="nav-link {% if request.resolver_match.url_name == 'admin_control_page' %}active{% endif %}"
+       href="{% url 'admin_control_page' %}">
+      <i class="bi bi-shield-lock"></i> Admin Control
+    </a>
+
+    <a class="nav-link {% if request.resolver_match.url_name == 'fleet_map_page' %}active{% endif %}"
+      href="{% url 'fleet_map_page' %}">
+      <i class="bi bi-map"></i> Live Tracker
+    </a>
+
+    <a class="nav-link {% if request.resolver_match.url_name == 'index_page' %}active{% endif %}"
+       href="{% url 'index_page' %}">
+      <i class="bi bi-speedometer2"></i> Dashboard
+    </a>
+    <a class="nav-link {% if request.resolver_match.url_name == 'add_car_page' %}active{% endif %}"
+       href="{% url 'add_car_page' %}">
+      <i class="bi bi-car-front"></i> Cars
+    </a>
+    <a class="nav-link {% if request.resolver_match.url_name == 'add_customer_page' %}active{% endif %}"
+       href="{% url 'add_customer_page' %}">
+      <i class="bi bi-people"></i> Customers
+    </a>
+    <a class="nav-link {% if request.resolver_match.url_name == 'add_hiring_page' %}active{% endif %}"
+       href="{% url 'add_hiring_page' %}">
+      <i class="bi bi-key"></i> Hires
+    </a>
+    <a class="nav-link {% if request.resolver_match.url_name == 'add_payment_page' %}active{% endif %}"
+       href="{% url 'add_payment_page' %}">
+      <i class="bi bi-cash-coin"></i> Payments
+    </a>
+    <a class="nav-link {% if request.resolver_match.url_name == 'car_List_page' %}active{% endif %}"
+       href="{% url 'car_List_page' %}">
+      <i class="bi bi-list-ul"></i> Fleet List
+    </a>
+    <a class="nav-link {% if request.resolver_match.url_name == 'add_driver_page' %}active{% endif %}"
+       href="{% url 'add_driver_page' %}">
+      <i class="bi bi-person-badge"></i> Drivers
+    </a>
+    
+    <!-- FIXED: Properly closed the Maintenance link -->
+    <a class="nav-link {% if request.resolver_match.url_name == 'add_maintenance_page' %}active{% endif %}"
+       href="{% url 'add_maintenance_page' %}">
+      <i class="bi bi-tools"></i> Maintenance
+    </a>
+  
+    <hr class="text-white-50 my-3">
+
+    <a class="nav-link {% if request.resolver_match.url_name == 'profiles_page' %}active{% endif %}"
+       href="{% url 'profiles_page' %}">
+      <i class="bi bi-person-circle"></i> Profile
+    </a>
+
+    {% if user.is_authenticated %}
+    <form method="post" action="{% url 'logout' %}" class="m-0">
+      {% csrf_token %}
+      <button type="submit" class="nav-link w-100 text-start bg-transparent border-0">
+        <i class="bi bi-box-arrow-right"></i> Logout
+      </button>
+    </form>
+    {% else %}
+    <a class="nav-link" href="{% url 'login' %}">
+      <i class="bi bi-box-arrow-in-right"></i> Login
+    </a>
+    {% endif %}
+  </nav>
+</aside>
+
+<!-- ============ MAIN ============ -->
+<div class="pdu-main">
+
+  <header class="pdu-topbar">
+    <div class="d-flex align-items-center gap-3">
+      <button class="btn btn-sm btn-outline-secondary d-lg-none"
+              onclick="document.getElementById('pduSidebar').classList.toggle('open')">
+        <i class="bi bi-list"></i>
+      </button>
+      <div class="title">{% block page_title %}Dashboard{% endblock %}</div>
+    </div>
+
+    <div class="d-flex align-items-center gap-3">
+      {% if user.is_authenticated %}
+        <span class="text-muted small">
+          <i class="bi bi-person-circle"></i> {{ user.username }}
+        </span>
+      {% else %}
+        <a class="btn btn-sm btn-primary" href="{% url 'login' %}">Sign in</a>
+        <a class="btn btn-sm btn-outline-primary" href="{% url 'sign_in_page' %}">Register</a>
+      {% endif %}
+    </div>
+  </header>
+
+  <main class="pdu-content">
+
+    {# flash messages #}
+    {% if messages %}
+      {% for message in messages %}
+        <div class="alert alert-{{ message.tags|default:'info' }} alert-dismissible fade show" role="alert">
+          {{ message }}
+          <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+      {% endfor %}
+    {% endif %}
+
+    {% block content %}{% endblock %}
+  </main>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+{% block extra_js %}{% endblock %}
+</body>
+</html>

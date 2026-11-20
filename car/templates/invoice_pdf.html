@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+  @page {
+    size: A4;
+    margin: 2cm;
+    @bottom-right {
+      content: "Page " counter(page) " of " counter(pages);
+      font-size: 9px;
+      color: #888;
+    }
+  }
+  body {
+    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    font-size: 12px;
+    color: #333;
+    line-height: 1.5;
+  }
+  .header {
+    display: flex;
+    justify-content: space-between;
+    border-bottom: 2px solid #1e3a8a;
+    padding-bottom: 20px;
+    margin-bottom: 30px;
+  }
+  .company-details h1 {
+    color: #1e3a8a;
+    margin: 0 0 5px 0;
+    font-size: 24px;
+  }
+  .company-details p {
+    margin: 0;
+    font-size: 11px;
+    color: #555;
+  }
+  .invoice-details {
+    text-align: right;
+  }
+  .invoice-details h2 {
+    margin: 0 0 5px 0;
+    color: #1e3a8a;
+    font-size: 28px;
+    letter-spacing: 1px;
+  }
+  .invoice-details p {
+    margin: 0;
+    font-size: 12px;
+  }
+  .billing-section {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 30px;
+  }
+  .billing-box {
+    width: 45%;
+  }
+  .billing-box h3 {
+    font-size: 11px;
+    text-transform: uppercase;
+    color: #888;
+    margin-bottom: 5px;
+    border-bottom: 1px solid #ddd;
+    padding-bottom: 3px;
+  }
+  .billing-box p {
+    margin: 2px 0;
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 30px;
+  }
+  th {
+    background: #1e3a8a;
+    color: white;
+    text-align: left;
+    padding: 10px;
+    font-size: 11px;
+    text-transform: uppercase;
+  }
+  td {
+    padding: 10px;
+    border-bottom: 1px solid #ddd;
+  }
+  .text-right { text-align: right; }
+  .totals-table {
+    width: 50%;
+    margin-left: auto;
+  }
+  .totals-table td {
+    border: none;
+    padding: 5px 10px;
+  }
+  .totals-table tr.grand-total td {
+    border-top: 2px solid #1e3a8a;
+    font-weight: bold;
+    font-size: 16px;
+    color: #1e3a8a;
+    padding-top: 10px;
+  }
+  .footer {
+    text-align: center;
+    font-size: 10px;
+    color: #888;
+    margin-top: 50px;
+    border-top: 1px solid #ddd;
+    padding-top: 10px;
+  }
+</style>
+</head>
+<body>
+
+  <!-- Header -->
+  <div class="header">
+    <div class="company-details">
+      <h1>{{ company.name }}</h1>
+      <p>{{ company.address }}</p>
+      <p>Tel: {{ company.phone }} | Email: {{ company.email }}</p>
+      <p>TIN: {{ company.tin }}</p>
+    </div>
+    <div class="invoice-details">
+      <h2>INVOICE</h2>
+      <p><strong>Invoice #:</strong> INV-{{ hiring.id|stringformat:"04d" }}</p>
+      <p><strong>Date:</strong> {{ today|date:"d M Y" }}</p>
+      <p><strong>Status:</strong> 
+        {% if hiring.status == 'P' %}PENDING
+        {% elif hiring.status == 'A' %}ACTIVE
+        {% else %}COMPLETED{% endif %}
+      </p>
+    </div>
+  </div>
+
+  <!-- Billing Info -->
+  <div class="billing-section">
+    <div class="billing-box">
+      <h3>Billed To</h3>
+      <p><strong>{{ hiring.customer.customer_name }}</strong></p>
+      <p>{{ hiring.customer.address }}</p>
+      <p>Phone: {{ hiring.customer.contact }}</p>
+      {% if hiring.customer.email %}<p>Email: {{ hiring.customer.email }}</p>{% endif %}
+    </div>
+        <div class="billing-box">
+      <h3>Hire Details</h3>
+      <p><strong>Hire Date:</strong> {{ hiring.hire_date|date:"d M Y" }}</p>
+      <p><strong>Return Date:</strong> {{ expected_return|date:"d M Y" }}</p>
+      <p><strong>Duration:</strong> {{ hiring.number_of_days }} days</p>
+      <p><strong>Service:</strong> {{ hiring.get_service_type_display }}</p>
+      <p><strong>Pickup:</strong> {{ hiring.get_pickup_location_display }}</p>
+    </div>
+  </div>
+
+  <!-- Line Items -->
+  <table>
+    <thead>
+      <tr>
+        <th>Description</th>
+        <th class="text-right">Rate (UGX)</th>
+        <th class="text-right">Qty</th>
+        <th class="text-right">Total (UGX)</th>
+      </tr>
+    </thead>
+    <tbody>
+      <!-- Car Line Item -->
+      <tr>
+        <td>
+          <strong>Car Rental:</strong> {{ hiring.car.make }} {{ hiring.car.car_Model }}<br>
+          <small style="color: #666;">Plate: {{ hiring.car.plate_no }} | Transmission: {{ hiring.car.get_transmission_display }}</small>
+        </td>
+        <td class="text-right">{{ hiring.car.price_per_day|floatformat:0 }}</td>
+        <td class="text-right">{{ hiring.number_of_days }}</td>
+        <td class="text-right">{{ hiring.car.price_per_day|floatformat:0 }}</td>
+      </tr>
+      
+      <!-- Driver Line Item (If Chauffeur) -->
+      {% if hiring.service_type == 'C' and hiring.driver %}
+      <tr>
+        <td>
+          <strong>Chauffeur Service:</strong> {{ hiring.driver.name }}<br>
+          <small style="color: #666;">License: {{ hiring.driver.license_no }}</small>
+        </td>
+        <td class="text-right">{{ hiring.driver.daily_rate|floatformat:0 }}</td>
+        <td class="text-right">{{ hiring.number_of_days }}</td>
+        <td class="text-right">{{ hiring.driver.daily_rate|floatformat:0 }}</td>
+      </tr>
+      {% endif %}
+    </tbody>
+  </table>
+
+  <!-- Totals -->
+    <!-- Totals -->
+  <table class="totals-table">
+    <tr>
+      <td>Subtotal:</td>
+      <td class="text-right">
+        {% if hiring.discount_applied %}
+          <span style="text-decoration: line-through; color: #888;">
+            {{ hiring.car.price_per_day|add:hiring.driver.daily_rate|floatformat:0 }} (approx)
+          </span>
+        {% else %}
+          {{ hiring.amount_to_be_paid|floatformat:0 }}
+        {% endif %}
+      </td>
+    </tr>
+    {% if hiring.discount_applied %}
+    <tr>
+      <td class="text-success">Returning Client Discount (10%):</td>
+      <td class="text-right text-success">- Applied</td>
+    </tr>
+    {% endif %}
+    <tr>
+      <td>Tax (0%):</td>
+      <td class="text-right">0</td>
+    </tr>
+    <tr class="grand-total">
+      <td>Total Due:</td>
+      <td class="text-right">UGX {{ hiring.amount_to_be_paid|floatformat:0 }}</td>
+    </tr>
+  </table>
+
+  <!-- Footer -->
+  <div class="footer">
+    <p><strong>Terms & Conditions:</strong> Payment is due upon vehicle collection. Fuel is not included. Late returns will be charged at the daily rate.</p>
+    <p>Thank you for choosing Pearl Drive Uganda!</p>
+  </div>
+
+</body>
+</html>

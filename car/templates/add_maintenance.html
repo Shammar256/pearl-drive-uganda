@@ -1,0 +1,119 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+{% block page_title %}Maintenance{% endblock %}
+
+{% block content %}
+<!-- ================= LOG FORM ================= -->
+<div class="card mb-3">
+  <div class="card-header bg-white">
+    <h6 class="mb-0"><i class="bi bi-wrench-adjustable"></i> Log Service / Repair</h6>
+  </div>
+  <div class="card-body">
+    <form method="POST">
+      {% csrf_token %}
+      <div class="row g-3">{{ form|crispy }}</div>
+      <p class="text-muted small mt-2 mb-0">
+        <i class="bi bi-info-circle"></i>
+        Setting status to <b>Scheduled</b> or <b>In progress</b> puts the car in the garage.
+        Marking it <b>Done</b> returns the car to Available.
+      </p>
+      <div class="mt-3">
+        <button type="submit" class="btn btn-primary"><i class="bi bi-check-lg"></i> Save Record</button>
+        <button type="reset" class="btn btn-outline-secondary">Reset</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ================= SERVICE HISTORY TABLE ================= -->
+<div class="card">
+  <div class="card-header bg-white d-flex justify-content-between align-items-center">
+    <h6 class="mb-0"><i class="bi bi-clock-history"></i> Service History ({{ records|length }})</h6>
+    
+    <!-- Search & Filter Controls -->
+    <div class="d-flex gap-2">
+      <input type="text" id="maintSearch" class="form-control form-control-sm" placeholder="Search car, garage..." style="width: 250px;">
+      <select id="maintStatusFilter" class="form-select form-select-sm" style="width: 150px;">
+        <option value="">All Statuses</option>
+        <option value="Scheduled">Scheduled</option>
+        <option value="In Progress">In Progress</option>
+        <option value="Done">Done</option>
+      </select>
+    </div>
+  </div>
+  
+  <div class="table-responsive">
+    <table class="table table-hover align-middle mb-0">
+      <thead>
+        <tr>
+          <th>#</th><th>Car</th><th>Service</th><th>Date</th><th>Next Due</th>
+          <th>Garage</th><th>Cost (UGX)</th><th>Status</th><th>Actions</th>
+        </tr>
+      </thead>
+      <tbody id="maintTableBody">
+        {% for r in records %}
+        <tr>
+          <td>{{ forloop.counter }}</td>
+          <td>{{ r.car.plate_no }}<br><small class="text-muted">{{ r.car.make }} {{ r.car.car_Model }}</small></td>
+          <td>{{ r.get_service_type_display }}</td>
+          <td>{{ r.service_date|date:"Y-m-d" }}</td>
+          <td>
+            {{ r.next_service_date|date:"Y-m-d"|default:"—" }}
+            {% if r.next_service_date and r.next_service_date < today and r.status != 'D' %}
+              <span class="badge bg-danger ms-1">Overdue</span>
+            {% endif %}
+          </td>
+          <td>{{ r.garage|default:"—" }}</td>
+          <td>{{ r.cost|floatformat:0 }}</td>
+          <td>
+            {% if r.status == 'S' %}<span class="badge bg-info text-dark">Scheduled</span>
+            {% elif r.status == 'I' %}<span class="badge bg-warning text-dark">In Progress</span>
+            {% else %}<span class="badge bg-success">Done</span>{% endif %}
+          </td>
+          <td class="text-nowrap">
+            <a href="{% url 'edit_maintenance_page' r.id %}" class="btn btn-sm btn-outline-primary"><i class="bi bi-pencil"></i></a>
+            <a href="{% url 'delete_maintenance_page' r.id %}" class="btn btn-sm btn-outline-danger"
+               onclick="return confirm('Delete this maintenance record?')"><i class="bi bi-trash"></i></a>
+          </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="9" class="text-center text-muted py-4">No maintenance records yet.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}
+
+<!-- ================= JAVASCRIPT ================= -->
+{% block extra_js %}
+<script>
+  const searchInput = document.getElementById('maintSearch');
+  const statusFilter = document.getElementById('maintStatusFilter');
+  const tableBody = document.getElementById('maintTableBody');
+  const rows = tableBody.getElementsByTagName('tr');
+
+  function filterMaintenance() {
+    const searchTerm = searchInput.value.toLowerCase();
+    const statusTerm = statusFilter.value.toLowerCase();
+
+    for (let i = 0; i < rows.length; i++) {
+      const row = rows[i];
+      // Skip the "No records" empty state row
+      if (row.cells.length < 5) continue; 
+      
+      const rowText = row.innerText.toLowerCase();
+      // Column index 7 is the Status column
+      const statusText = row.cells[7].innerText.toLowerCase(); 
+      
+      const matchesSearch = rowText.includes(searchTerm);
+      const matchesStatus = statusTerm === "" || statusText.includes(statusTerm);
+
+      row.style.display = (matchesSearch && matchesStatus) ? "" : "none";
+    }
+  }
+
+  searchInput.addEventListener('keyup', filterMaintenance);
+  statusFilter.addEventListener('change', filterMaintenance);
+</script>
+{% endblock %}

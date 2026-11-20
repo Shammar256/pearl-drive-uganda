@@ -1,0 +1,47 @@
+{% extends 'base.html' %}
+{% block page_title %}Fleet List{% endblock %}
+{% block content %}
+
+<div class="card">
+  <div class="card-header bg-white d-flex justify-content-between align-items-center">
+    <h6 class="mb-0"><i class="bi bi-list-ul"></i> Fleet ({{ cars|length }})</h6>
+    <a href="{% url 'car_pdf' %}" target="_blank" class="btn btn-sm btn-outline-secondary">
+      <i class="bi bi-file-earmark-pdf"></i> Export PDF
+    </a>
+  </div>
+  <div class="table-responsive">
+    <table class="table table-hover align-middle mb-0">
+      <thead>
+        <tr><th>#</th><th>Photo</th><th>Plate</th><th>Make</th><th>Model</th>
+            <th>Seats</th><th>Trans.</th><th>Price/Day</th><th>Status</th></tr>
+      </thead>
+      <tbody>
+        {% for car in cars %}
+        <tr>
+          <td>{{ forloop.counter }}</td>
+          <td>
+            {% if car.image %}
+              <img src="{{ car.image.url }}" alt="" style="width:56px;height:40px;object-fit:cover;border-radius:4px;">
+            {% else %}—{% endif %}
+          </td>
+          <td>{{ car.plate_no }}</td>
+          <td>{{ car.make }}</td>
+          <td>{{ car.car_Model }}</td>
+          <td>{{ car.capacity|default:"—" }}</td>
+          <td>{{ car.get_transmission_display }}</td>
+          <td>{{ car.price_per_day|floatformat:0|default:"—" }}</td>
+          <td>
+            {% if car.status == 'A' %}<span class="badge bg-success">Available</span>
+            {% elif car.status == 'T' %}<span class="badge bg-warning text-dark">Taken</span>
+            {% else %}<span class="badge bg-secondary">Maintenance</span>{% endif %}
+          </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="9" class="text-center text-muted py-4">No cars in fleet.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+{% endblock %}

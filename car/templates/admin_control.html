@@ -1,0 +1,141 @@
+{% extends 'base.html' %}
+{% block page_title %}Admin Control Center{% endblock %}
+
+{% block content %}
+<div class="row g-4 mb-4">
+  <!-- Quick Stats -->
+  <div class="col-md-3">
+    <div class="card p-3 shadow-sm border-0 bg-primary text-white">
+      <h6 class="opacity-75">Fleet Size</h6>
+      <h2 class="mb-0">{{ total_cars }}</h2>
+      <small>{{ available_cars }} Available | {{ cars_in_garage }} In Garage</small>
+    </div>
+  </div>
+  <div class="col-md-3">
+    <div class="card p-3 shadow-sm border-0 bg-warning text-dark">
+      <h6 class="opacity-75">Pending Bookings</h6>
+      <h2 class="mb-0">{{ pending_hires }}</h2>
+      <small>Needs your approval</small>
+    </div>
+  </div>
+  <div class="col-md-3">
+    <div class="card p-3 shadow-sm border-0 bg-success text-white">
+      <h6 class="opacity-75">Active Hires</h6>
+      <h2 class="mb-0">{{ active_hires }}</h2>
+      <small>Cars currently on the road</small>
+    </div>
+  </div>
+  <div class="col-md-3">
+    <div class="card p-3 shadow-sm border-0 bg-dark text-white">
+      <h6 class="opacity-75">Total Drivers</h6>
+      <h2 class="mb-0">{{ total_drivers }}</h2>
+      <small>{{ total_customers }} registered customers</small>
+    </div>
+  </div>
+</div>
+
+<h5 class="mb-3 fw-bold"><i class="bi bi-tools"></i> Management Tools</h5>
+
+<div class="row g-3 mb-4">
+  <!-- Fleet Management -->
+  <div class="col-md-4">
+    <div class="card shadow-sm border-0 h-100">
+      <div class="card-body">
+        <h5 class="card-title text-primary"><i class="bi bi-car-front"></i> Fleet & Specifications</h5>
+        <p class="card-text text-muted small">Add new vehicles, update daily rates, change transmission types, or upload photos.</p>
+        <a href="{% url 'add_car_page' %}" class="btn btn-outline-primary w-100">Manage Fleet</a>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Driver Management -->
+  <div class="col-md-4">
+    <div class="card shadow-sm border-0 h-100">
+      <div class="card-body">
+        <h5 class="card-title text-primary"><i class="bi bi-person-badge"></i> Chauffeurs & Drivers</h5>
+        <p class="card-text text-muted small">Register new drivers, update driving permits, set daily rates, and track availability.</p>
+        <a href="{% url 'add_driver_page' %}" class="btn btn-outline-primary w-100">Manage Drivers</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bookings & Hires -->
+  <div class="col-md-4">
+    <div class="card shadow-sm border-0 h-100">
+      <div class="card-body">
+        <h5 class="card-title text-primary"><i class="bi bi-key"></i> Bookings & Handovers</h5>
+        <p class="card-text text-muted small">Approve pending bookings, assign drivers, record mileage checkouts, and process returns.</p>
+        <a href="{% url 'add_hiring_page' %}" class="btn btn-outline-primary w-100">Manage Hires</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Maintenance -->
+  <div class="col-md-4">
+    <div class="card shadow-sm border-0 h-100">
+      <div class="card-body">
+        <h5 class="card-title text-primary"><i class="bi bi-wrench-adjustable"></i> Garage & Maintenance</h5>
+        <p class="card-text text-muted small">Log service history, track repair costs, and monitor upcoming maintenance alerts.</p>
+        <a href="{% url 'add_maintenance_page' %}" class="btn btn-outline-primary w-100">Manage Maintenance</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Customers -->
+  <div class="col-md-4">
+    <div class="card shadow-sm border-0 h-100">
+      <div class="card-body">
+        <h5 class="card-title text-primary"><i class="bi bi-people"></i> Customer Database</h5>
+        <p class="card-text text-muted small">View all registered customers, their contact details, and returning client status.</p>
+        <a href="{% url 'add_customer_page' %}" class="btn btn-outline-primary w-100">Manage Customers</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Payments & Invoices -->
+  <div class="col-md-4">
+    <div class="card shadow-sm border-0 h-100">
+      <div class="card-body">
+        <h5 class="card-title text-primary"><i class="bi bi-cash-coin"></i> Payments & Invoicing</h5>
+        <p class="card-text text-muted small">Record manual payments, view outstanding balances, and generate PDF invoices.</p>
+        <a href="{% url 'add_payment_page' %}" class="btn btn-outline-primary w-100">Manage Payments</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Recent Bookings Table -->
+<div class="card shadow-sm border-0">
+  <div class="card-header bg-white">
+    <h6 class="mb-0 fw-bold"><i class="bi bi-clock-history"></i> Recent Booking Requests</h6>
+  </div>
+  <div class="table-responsive">
+    <table class="table table-hover align-middle mb-0">
+      <thead>
+        <tr>
+          <th>Customer</th><th>Car</th><th>Date</th><th>Status</th><th>Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for hire in recent_hires %}
+        <tr>
+          <td>{{ hire.customer.customer_name }}</td>
+          <td>{{ hire.car.make }} {{ hire.car.car_Model }}</td>
+          <td>{{ hire.hire_date|date:"Y-m-d" }}</td>
+          <td>
+            {% if hire.status == 'P' %}<span class="badge bg-warning text-dark">Pending</span>
+            {% elif hire.status == 'A' %}<span class="badge bg-success">Active</span>
+            {% else %}<span class="badge bg-secondary">Completed</span>{% endif %}
+          </td>
+          <td>
+            <a href="{% url 'add_hiring_page' %}" class="btn btn-sm btn-outline-secondary">Review</a>
+          </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="5" class="text-center text-muted py-3">No recent bookings.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}
